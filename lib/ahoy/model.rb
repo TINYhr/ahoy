@@ -1,3 +1,4 @@
+module Ahoy
   module Model
 
     def ahoy_visit
