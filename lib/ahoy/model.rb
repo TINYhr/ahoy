@@ -54,7 +54,7 @@ module Ahoy
         end
 
         def set_location(deferred=true)
-          if self.new_record? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
+          if id_changed? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
             location =
               begin
                 if deferred && defined?(VisitGeoLookUp)
