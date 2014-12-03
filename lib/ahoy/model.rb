@@ -1,4 +1,3 @@
-module Ahoy
   module Model
 
     def ahoy_visit
@@ -9,7 +8,7 @@ module Ahoy
         before_create :set_traffic_source
         before_create :set_utm_parameters
         before_create :set_technology
-        before_create :set_location
+        after_save :set_location
 
         def set_traffic_source
           referring_domain = Addressable::URI.parse(referrer).host.first(255) rescue nil
@@ -53,16 +52,20 @@ module Ahoy
           true
         end
 
-        def set_location
-          if respond_to?(:ip) and [:country=, :region=, :city=].any?{|method| respond_to?(method) }
+        def set_location(defered=true)
+          if self.new_record? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
             location =
               begin
-                Geocoder.search(ip).first
+                if defered && defined?(VisitGeoLookUp)
+                  Resque.enqueue(VisitGeoLookUp, self.id)
+                  nil
+                else
+                  Geocoder.search(ip).first
+                end
               rescue => e
                 $stderr.puts e.message
                 nil
               end
-
             if location
               self.country = location.country.presence if respond_to?(:country=)
               self.region = location.state.presence if respond_to?(:region=)
