@@ -53,11 +53,11 @@ module Ahoy
           true
         end
 
-        def set_location(defered=true)
+        def set_location(deferred=true)
           if self.new_record? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
             location =
               begin
-                if defered && defined?(VisitGeoLookUp)
+                if deferred && defined?(VisitGeoLookUp)
                   Resque.enqueue(VisitGeoLookUp, self.id)
                   nil
                 else
