@@ -54,26 +54,19 @@ module Ahoy
         end
 
         def set_location(deferred=true)
-          if id_changed? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
-            location =
-              begin
-                if deferred
-                  Resque.enqueue(VisitGeoLookUp, self.id)
-                  nil
-                else
-                  Geocoder.search(ip).first
-                end
-              rescue => e
-                $stderr.puts e.message
-                nil
-              end
-            if location
+          if deferred
+            Resque.enqueue(VisitGeoLookUp, self.id) if id_changed?
+          else
+            if respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
+              location = Geocoder.search(ip).first
               self.country = location.country.presence if respond_to?(:country=)
               self.region = location.state.presence if respond_to?(:region=)
               self.city = location.city.presence if respond_to?(:city=)
             end
           end
           true
+        rescue => e
+          $stderr.puts e.message
         end
 
         def landing_params
