@@ -57,7 +57,7 @@ module Ahoy
           if id_changed? && respond_to?(:ip) && ip.present? && [:country=, :region=, :city=].any?{|method| respond_to?(method) }
             location =
               begin
-                if deferred && defined?(VisitGeoLookUp)
+                if deferred
                   Resque.enqueue(VisitGeoLookUp, self.id)
                   nil
                 else
